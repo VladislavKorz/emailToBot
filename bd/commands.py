@@ -1,5 +1,5 @@
 import datetime
-import pandas
+import config
 from loguru import logger
 from bd.connector import conn
 
@@ -26,3 +26,13 @@ def user_create(email, password, user_id, host='pop.gmail.com'):
     cur.close()
     return msg
 
+def user_login(user_id):
+    cur = conn.cursor()
+    cur.execute(f"select * from users where user_id = '{user_id}'")
+    data = cur.fetchall()
+    if data:
+        log(user_id, 'INFO', f"Чекает письма УСПЕШНО")
+        return [data[0][0], data[0][1], data[0][2]]
+    else:
+        log(user_id, 'INFO', f"Чекает письма не успешно {data=}")
+        return False    

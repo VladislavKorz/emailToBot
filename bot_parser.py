@@ -7,13 +7,9 @@ from loguru import logger
 from email_test import emailCheck
 from config import bot
 from bot_login import *
+from bd.commands import *
 
-username = 'Рудольф'
-age = 12
-answ = f"Привет, {username}, тебе {age} лет"
 logger.info(f"Бот запущен")
-logger.debug(f"Сообщение - {answ}")
-logger.error("Бот запущен")
 
 
 @bot.message_handler(commands=['start'])
@@ -47,10 +43,20 @@ def bot_command_settings(message):
 
 @bot.message_handler(commands=['email'])
 def bot_command_email(message):
-    email_list = emailCheck().get_email()
-    for item in email_list:
-        answ = f"*От*: {item.get('sender')}\n*Тема*: {item.get('subject')}\n*Дата*: {item.get('date_send')}\n*Статус*: {item.get('type')}\n"
-        bot.send_message(message.chat.id, answ, parse_mode='Markdown')
+    user = user_login(message.from_user.id)
+    if user:
+        logger.info(user)
+        email_list = emailCheck(user[0], user[1], user[2]).get_email()
+        if len(email_list) > 4:
+            email_list = email_list[:4]
+        for item in email_list:
+            answ = f"*От*: {item.get('sender')}\n*Тема*: {item.get('subject')}\n*Дата*: {item.get('date_send')}\n*Статус*: {item.get('type')}\n"
+            bot.send_message(message.chat.id, answ, parse_mode='Markdown')
+    else:
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton(text='Зарегистрироваться', callback_data='reg'))
+        bot.send_message(message.chat.id, "Вам нужно зарегестрироваться, для этого нажмите кнопку ниже", reply_markup=markup)
+
 
     # mail = imaplib.IMAP4_SSL('imap.gmail.com')
     # mail.login('xde.test.070', '6c7c6b7b7x')
