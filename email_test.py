@@ -34,7 +34,7 @@ class emailCheck():
                 raw_email_string = raw_email.decode('utf-8')
 
                 email_message = email.message_from_string(raw_email_string)
-
+                logger.info(email_message['Message-Id'])
                 email_list.append({
                     'key': email_message['Message-Id'],
                     'date_send': email_message['Date'],
