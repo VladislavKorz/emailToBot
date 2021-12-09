@@ -41,6 +41,20 @@ def bot_command_settings(message):
     markup.add(types.InlineKeyboardButton(text='Удалить', callback_data='delete'))
     bot.send_message(message.chat.id,text='Выберите нужный пункт',reply_markup=markup)
 
+class zsd:
+    def __init__(self, name, age):
+      self.name = name
+      self.age = age
+
+
+import json
+
+class PersonEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, zsd):
+            return obj.__dict__
+        return json.JSONEncoder.default(self, obj)
+
 @bot.message_handler(commands=['email'])
 def bot_command_email(message):
     user = user_login(message.from_user.id)
@@ -50,8 +64,14 @@ def bot_command_email(message):
         if len(email_list) > 4:
             email_list = email_list[:4]
         for item in email_list:
+            
+            markup = types.InlineKeyboardMarkup()
+            key1 = types.InlineKeyboardButton(text='Просмотреть', callback_data='email_view')
+            key2 = types.InlineKeyboardButton(text='Удалить', callback_data="email_delete")
+            markup.add(key1, key2)
             answ = f"*От*: {item.get('sender')}\n*Тема*: {item.get('subject')}\n*Дата*: {item.get('date_send')}\n*Статус*: {item.get('type')}\n"
-            bot.send_message(message.chat.id, answ, parse_mode='Markdown')
+            bot.send_message(message.chat.id, answ, parse_mode='Markdown',reply_markup=markup)
+            
     else:
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(text='Зарегистрироваться', callback_data='reg'))
@@ -83,7 +103,6 @@ def bot_command_email(message):
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
 
-    bot.answer_callback_query(callback_query_id=call.id, text='Спасибо за выбор нашего бота!')
     answer = ''
     if call.data == 'reg':
         answer = 'Вы выбрали пункт Зарегистрироваться!\nПожалуйста, введите Ваш email'
@@ -104,6 +123,21 @@ def query_handler(call):
         answer = 'Ответить'
     elif call.data == 'delete':
         answer = 'Удалить'
+    elif 'email_view' in call.data:
+        bot.answer_callback_query(callback_query_id=call.id, text='Мы готовы показать Вам письмо, но сначала посчитайте до 5!')
+        sender = (call.message.text[str(call.message.text).find('От: ')+len('От: '):str(call.message.text).find('Тема: ')]).replace("\n", '')
+        date = call.message.text[str(call.message.text).find('Дата: ')+len('Дата: '):str(call.message.text).find('Статус: ')].replace("\n", '')
+        user = user_login(call.from_user.id)
+        msg = emailCheck(user[0], user[1], user[2]).get_body_email(sender, date)
+        answer = f'Письмо просмотрено'
+        bot.edit_message_text(call.message.text+'\n\nВот что Вам написали в письме:\n'+str(msg), chat_id=call.message.chat.id, message_id=call.message.message_id)
+    elif 'email_delete' in call.data:
+        answer = f'Письмо удалено'
+        sender = (call.message.text[str(call.message.text).find('От: ')+len('От: '):str(call.message.text).find('Тема: ')]).replace("\n", '')
+        date = call.message.text[str(call.message.text).find('Дата: ')+len('Дата: '):str(call.message.text).find('Статус: ')].replace("\n", '')
+        user = user_login(call.from_user.id)
+        msg = emailCheck(user[0], user[1], user[2]).delted_email(sender, date)
+        bot.edit_message_text("Письмо удалено", chat_id=call.message.chat.id, message_id=call.message.message_id)
 
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id)
 

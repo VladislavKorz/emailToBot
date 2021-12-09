@@ -24,7 +24,14 @@ for latest_email_id in id_list:
     from_email = email.utils.parseaddr(email_message['From'])[0]
     if from_email.count('=?UTF-8?B'):
         from_email = from_email[len('=?UTF-8?B'):]
-        print(base64.b64decode(from_email).decode('utf-8'))
+        # print(base64.b64decode(from_email).decode('utf-8'))
 
 
- 
+if email_message.is_multipart():
+    em = email_message.get_payload()[0]
+    body = em.get_payload(decode=True).decode('utf-8')
+    print(body)
+    print("/n/n/n")
+else:    
+    body = email_message.get_payload(decode=True).decode('utf-8')
+    print(body)
