@@ -68,7 +68,7 @@ def bot_command_email(message):
                 
                 markup = types.InlineKeyboardMarkup()
                 key1 = types.InlineKeyboardButton(text='Просмотреть', callback_data=f"email_view_{item.get('uid')}")
-                key2 = types.InlineKeyboardButton(text='Ответить', callback_data=f"email_otvet_{item.get('uid')}")
+                key2 = types.InlineKeyboardButton(text='Ответить', callback_data=f"email_otvet_{item.get('sender')}")
                 key3 = types.InlineKeyboardButton(text='Удалить', callback_data=f"email_delete_{item.get('uid')}")
 
                 markup.add(key1, key2,key3)
@@ -129,8 +129,9 @@ def query_handler(call):
         answer = 'Отметить прочитанным'
     elif 'email_otvet_' in call.data:
         answer = 'Ответить'
+        to = (call.data).replace('email_otvet_', '')
         user = user_login(call.from_user.id)
-        msg = emailCheck(user[0], user[1], user[2]).send_mail('korzhov.vladd@gmail.com', 'hello')
+        msg = emailCheck(user[0], user[1], user[2]).send_mail(to, 'Ответили на сообщение')
     elif 'email_view' in call.data:
         bot.answer_callback_query(callback_query_id=call.id, text='Мы готовы показать Вам письмо, но сначала посчитайте до 5!')
         uid = (call.data).replace('email_view_', '')

@@ -34,7 +34,7 @@ class emailCheck():
         self.mailbox.delete([msg.uid for msg in self.mailbox.fetch(AND(uid=uid))])
         return 'Сообщение удалено'
 
-    def send_mail(self, to, msg, subject='Новое письмо'):
+    def send_mail(self, to, msg, subject='New'):
         smtpObj = smtplib.SMTP('smtp.gmail.com', 587)
         smtpObj.starttls()
         smtpObj.login(self.email,self.password)
