@@ -68,7 +68,7 @@ def bot_command_email(message):
                 
                 markup = types.InlineKeyboardMarkup()
                 key1 = types.InlineKeyboardButton(text='Просмотреть', callback_data=f"email_view_{item.get('uid')}")
-                key2 = types.InlineKeyboardButton(text='Ответить', callback_data=f"email_otver_{item.get('uid')}")
+                key2 = types.InlineKeyboardButton(text='Ответить', callback_data=f"email_otvet_{item.get('uid')}")
                 key3 = types.InlineKeyboardButton(text='Удалить', callback_data=f"email_delete_{item.get('uid')}")
 
                 markup.add(key1, key2,key3)
@@ -127,10 +127,10 @@ def query_handler(call):
         answer = 'Посмотреть всё'
     elif call.data == 'mark_read':
         answer = 'Отметить прочитанным'
-    elif call.data == 'answer':
+    elif 'email_otvet_' in call.data:
         answer = 'Ответить'
-    elif call.data == 'delete':
-        answer = 'Удалить'
+        user = user_login(call.from_user.id)
+        msg = emailCheck(user[0], user[1], user[2]).send_mail('korzhov.vladd@gmail.com', 'hello')
     elif 'email_view' in call.data:
         bot.answer_callback_query(callback_query_id=call.id, text='Мы готовы показать Вам письмо, но сначала посчитайте до 5!')
         uid = (call.data).replace('email_view_', '')
@@ -140,10 +140,9 @@ def query_handler(call):
         bot.edit_message_text(call.message.text+'\n\nВот что Вам написали в письме:\n'+str(msg), chat_id=call.message.chat.id, message_id=call.message.message_id)
     elif 'email_delete' in call.data:
         answer = f'Письмо удалено'
-        sender = (call.message.text[str(call.message.text).find('От: ')+len('От: '):str(call.message.text).find('Тема: ')]).replace("\n", '')
-        date = call.message.text[str(call.message.text).find('Дата: ')+len('Дата: '):str(call.message.text).find('Статус: ')].replace("\n", '')
+        uid = (call.data).replace('email_delete_', '')
         user = user_login(call.from_user.id)
-        msg = emailCheck(user[0], user[1], user[2]).delted_email(sender, date)
+        msg = emailCheck(user[0], user[1], user[2]).delted_email(uid)
         bot.edit_message_text("Письмо удалено", chat_id=call.message.chat.id, message_id=call.message.message_id)
 
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id)
