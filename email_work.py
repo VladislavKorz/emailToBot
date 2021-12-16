@@ -13,9 +13,13 @@ class emailCheck():
         self.mailbox = MailBox(server)
         self.mailbox.login(email, password, initial_folder='INBOX')
     
-    def get_email(self):
+    def get_email(self, new=False):
         email_list = []
-        for msg in self.mailbox.fetch(AND(all=True)):
+        if new:
+            email_box = self.mailbox.fetch(AND(seen=False))
+        else:
+            email_box = self.mailbox.fetch(AND(all=True))
+        for msg in email_box:
             email_list.append({
                 'date_send': msg.date_str,
                 'subject': msg.subject,
@@ -39,10 +43,5 @@ class emailCheck():
         smtpObj.starttls()
         smtpObj.login(self.email,self.password)
         message = f"From: From Person {self.email}\nTo: To Person {to}\nSubject: {subject}\n{msg}"
-        # message = """From: From Person %s  
-        # To: To Person %s  
-        # Subject: %s 
-        # %s
-        # """%(self.email,to, subject, msg) 
         smtpObj.sendmail(self.email, to, message)
         smtpObj.quit()

@@ -35,4 +35,14 @@ def user_login(user_id):
         return [data[0][0], data[0][1], data[0][2]]
     else:
         log(user_id, 'INFO', f"Чекает письма не успешно {data=}")
+        return False
+
+
+def get_user_all():
+    cur = conn.cursor()
+    cur.execute(f"select * from users")
+    data = cur.fetchall()
+    if data:
+        return data
+    else:
         return False    

@@ -1,24 +1,17 @@
-# import time
-# from threading import Thread
+import time
+from threading import Thread
 
-# def sleepMe(i):
-#     print("Поток %i засыпает на 5 секунд.\n" % i)
-#     time.sleep(5)
-#     print("Поток %i сейчас проснулся.\n" % i)
+from loguru import logger
+from bot_parser import start_bot
+from th_chek_email import start_mail
 
-# for i in range(10):
-#     th = Thread(target=sleepMe, args=(i, ))
-#     th.start()
-# Import smtplib for the actual sending function
 
-import smtplib
-smtpObj = smtplib.SMTP('smtp.gmail.com', 587)
-smtpObj.starttls()
-smtpObj.login('xde.test.070@gmail.com','1029384756bot')
-to = 'korzhov.vladd@gmail.com'
-email = 'xde.test.070@gmail.com'
-msg = 'Helllooooo'
-message = f"From: From Person {email}\nTo: To Person {to}\nSubject: Sending SMTP e-mail\n{msg}"
+logger.info(f'Старт потоков')
+thread1 = Thread(target=start_bot, daemon=True)
+thread2 = Thread(target=start_mail, daemon=True)
 
-smtpObj.sendmail("xde.test.070@gmail.com","korzhov.vladd@gmail.com",message)
-smtpObj.quit()
+thread1.start()
+thread2.start()
+
+thread1.join()
+thread2.join()
