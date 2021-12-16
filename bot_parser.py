@@ -131,7 +131,7 @@ def query_handler(call):
         answer = 'Ответить'
         to = (call.data).replace('email_otvet_', '')
         user = user_login(call.from_user.id)
-        msg = emailCheck(user[0], user[1], user[2]).send_mail(to, 'Ответили на сообщение')
+        msg = emailCheck(user[0], user[1], user[2]).send_mail(to, 'Answer for message')
     elif 'email_view' in call.data:
         bot.answer_callback_query(callback_query_id=call.id, text='Мы готовы показать Вам письмо, но сначала посчитайте до 5!')
         uid = (call.data).replace('email_view_', '')
