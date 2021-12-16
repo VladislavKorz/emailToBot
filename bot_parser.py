@@ -4,7 +4,7 @@ import email
 import imaplib
 from time import sleep
 from loguru import logger
-from email_test import emailCheck
+from email_work import emailCheck
 from config import bot
 from bot_login import *
 from bd.commands import *
@@ -29,17 +29,17 @@ def bot_command_help(message):
 
 @bot.message_handler(commands=['settings'])
 def bot_command_settings(message):
-    bot.send_message(message.chat.id,'Скоро тут будут настройки!')
+    bot.send_message(message.chat.id,'В данном пункте скоро будут настройки!')
 
 
-@bot.message_handler(commands=['home'])
-def bot_command_settings(message):
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(text='Показать полностью', callback_data='view_all'))
-    markup.add(types.InlineKeyboardButton(text='Отметить прочитанным', callback_data='mark_read'))
-    markup.add(types.InlineKeyboardButton(text='Ответить', callback_data='answer'))
-    markup.add(types.InlineKeyboardButton(text='Удалить', callback_data='delete'))
-    bot.send_message(message.chat.id,text='Выберите нужный пункт',reply_markup=markup)
+# @bot.message_handler(commands=['home'])
+# def bot_command_settings(message):
+#     markup = types.InlineKeyboardMarkup()
+#     markup.add(types.InlineKeyboardButton(text='Показать полностью', callback_data='view_all'))
+#     markup.add(types.InlineKeyboardButton(text='Отметить прочитанным', callback_data='mark_read'))
+#     markup.add(types.InlineKeyboardButton(text='Ответить', callback_data='answer'))
+#     markup.add(types.InlineKeyboardButton(text='Удалить', callback_data='delete'))
+#     bot.send_message(message.chat.id,text='Выберите нужный пункт',reply_markup=markup)
 
 class zsd:
     def __init__(self, name, age):
@@ -55,22 +55,28 @@ class PersonEncoder(json.JSONEncoder):
             return obj.__dict__
         return json.JSONEncoder.default(self, obj)
 
-@bot.message_handler(commands=['email'])
+@bot.message_handler(commands=['home'])
 def bot_command_email(message):
     user = user_login(message.from_user.id)
     if user:
         logger.info(user)
         email_list = emailCheck(user[0], user[1], user[2]).get_email()
-        if len(email_list) > 4:
-            email_list = email_list[:4]
-        for item in email_list:
-            
-            markup = types.InlineKeyboardMarkup()
-            key1 = types.InlineKeyboardButton(text='Просмотреть', callback_data='email_view')
-            key2 = types.InlineKeyboardButton(text='Удалить', callback_data="email_delete")
-            markup.add(key1, key2)
-            answ = f"*От*: {item.get('sender')}\n*Тема*: {item.get('subject')}\n*Дата*: {item.get('date_send')}\n*Статус*: {item.get('type')}\n"
-            bot.send_message(message.chat.id, answ, parse_mode='Markdown',reply_markup=markup)
+        if not 'ERROR' in email_list:
+            if len(email_list) > 4:
+                email_list = email_list[len(email_list)-4:]
+            for item in email_list:
+                
+                markup = types.InlineKeyboardMarkup()
+                key1 = types.InlineKeyboardButton(text='Просмотреть', callback_data=f"email_view_{item.get('uid')}")
+                key2 = types.InlineKeyboardButton(text='Ответить', callback_data=f"email_otver_{item.get('uid')}")
+                key3 = types.InlineKeyboardButton(text='Удалить', callback_data=f"email_delete_{item.get('uid')}")
+
+                markup.add(key1, key2,key3)
+                answ = f"{item.get('uid')} *От*: {item.get('sender')}\n*Тема*: {item.get('subject')}\n*Дата*: {item.get('date_send')}\n"
+                bot.send_message(message.chat.id, answ, parse_mode='Markdown',reply_markup=markup)
+        else:
+            bot.send_message(message.chat.id, 'Ошибка авторизации')
+
             
     else:
         markup = types.InlineKeyboardMarkup()
@@ -113,8 +119,10 @@ def query_handler(call):
         answer = 'Вы выбрали пункт Подробнее про бота!'
     elif call.data == 'say':
         answer = 'Вы выбрали пункт Сказать идею!'
+        bot.send_message(call.message.chat.id,"Наша идея заключается в автоматизации бизнес процесса нефтегазовой промышленности посредством нашего телеграм-бота!")
     elif call.data == 'owner':
         answer = 'Перемещаю вас на главную страницу!'
+        bot.send_message(call.message.chat.id,"Бот,который берёт сообщения из email сервисов и отправляет в Telegram группу сотрудников компании!")
     elif call.data == 'view_all':
         answer = 'Посмотреть всё'
     elif call.data == 'mark_read':
@@ -125,10 +133,9 @@ def query_handler(call):
         answer = 'Удалить'
     elif 'email_view' in call.data:
         bot.answer_callback_query(callback_query_id=call.id, text='Мы готовы показать Вам письмо, но сначала посчитайте до 5!')
-        sender = (call.message.text[str(call.message.text).find('От: ')+len('От: '):str(call.message.text).find('Тема: ')]).replace("\n", '')
-        date = call.message.text[str(call.message.text).find('Дата: ')+len('Дата: '):str(call.message.text).find('Статус: ')].replace("\n", '')
+        uid = (call.data).replace('email_view_', '')
         user = user_login(call.from_user.id)
-        msg = emailCheck(user[0], user[1], user[2]).get_body_email(sender, date)
+        msg = emailCheck(user[0], user[1], user[2]).get_body_email(uid)
         answer = f'Письмо просмотрено'
         bot.edit_message_text(call.message.text+'\n\nВот что Вам написали в письме:\n'+str(msg), chat_id=call.message.chat.id, message_id=call.message.message_id)
     elif 'email_delete' in call.data:
