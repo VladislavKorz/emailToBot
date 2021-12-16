@@ -10,7 +10,7 @@ def singup(message):
 
 def singup_password(message, email):
     password = message.text
-    req = user_create(email, message.text, message.from_user.id)
+    req = user_create(email, message.text, message.chat.id)
     if 'Create' in req:
         bot.send_message(message.chat.id, 'Пользователь успешно создан, введите /home, для перехода на домашнюю страницу')
     elif 'Error' in req:

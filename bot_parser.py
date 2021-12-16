@@ -12,9 +12,9 @@ from bd.commands import *
 def start_bot():
     logger.info(f"Бот запущен")
 
-
     @bot.message_handler(commands=['start'])
     def bot_command_start(message):
+        logger.info(message)
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton(text='Зарегистрироваться', callback_data='reg'))
         markup.add(types.InlineKeyboardButton(text='Подробнее про бота', callback_data='more'))
@@ -32,18 +32,19 @@ def start_bot():
     def bot_command_settings(message):
         bot.send_message(message.chat.id,'В данном пункте скоро будут настройки!')
 
+    @bot.message_handler(commands=['reg_email'])
+    def create_email(message):
+        msg = (message.text).replace("/reg_email ", "")
+        email = msg[:(msg).find(' ')]
+        password = msg[(msg).rfind(' ')+1:]
+        logger.info(email)
+        logger.info(password)       
+        user_create(email, password, message.chat.id)
+        bot.send_message(message.chat.id, 'Пользователь успешно вошёл, введите /home, для перехода на домашнюю страницу')
 
-    # @bot.message_handler(commands=['home'])
-    # def bot_command_settings(message):
-    #     markup = types.InlineKeyboardMarkup()
-    #     markup.add(types.InlineKeyboardButton(text='Показать полностью', callback_data='view_all'))
-    #     markup.add(types.InlineKeyboardButton(text='Отметить прочитанным', callback_data='mark_read'))
-    #     markup.add(types.InlineKeyboardButton(text='Ответить', callback_data='answer'))
-    #     markup.add(types.InlineKeyboardButton(text='Удалить', callback_data='delete'))
-    #     bot.send_message(message.chat.id,text='Выберите нужный пункт',reply_markup=markup)
     @bot.message_handler(commands=['home'])
     def bot_command_email(message):
-        user = user_login(message.from_user.id)
+        user = user_login(message.chat.id)
         if user:
             logger.info(user)
             email_list = emailCheck(user[0], user[1], user[2]).get_email()
@@ -70,31 +71,9 @@ def start_bot():
             bot.send_message(message.chat.id, "Вам нужно зарегестрироваться, для этого нажмите кнопку ниже", reply_markup=markup)
 
 
-        # mail = imaplib.IMAP4_SSL('imap.gmail.com')
-        # mail.login('xde.test.070', '6c7c6b7b7x')
-        # mail.select("INBOX")
-        # (retcode, messages) = mail.search(None, '(UNSEEN)')
-        # if retcode == 'OK':
-        #     n = 0
-        #     for num in messages[0].split():
-        #         n = n + 1
-        #         typ, data = mail.fetch(num, '(RFC822)')
-        #         for respone_part in data:
-        #             if isinstance(respone_part, tuple):
-        #                 original = email.message_from_string('respone_part[1]')
-        #                 print(original['From'])
-        #                 data = original['Subject']
-        #                 print(data)
-        #                 typ, data = mail.store(num, '+FLAGS', '\\Seen')
-                
-
-                        
-        # bot.send_message(message.chat.id,mail)
-
-
     @bot.callback_query_handler(func=lambda call: True)
     def query_handler(call):
-
+        logger.info(call.message.chat.id)
         answer = ''
         if call.data == 'reg':
             answer = 'Вы выбрали пункт Зарегистрироваться!\nПожалуйста, введите Ваш email'
@@ -116,20 +95,20 @@ def start_bot():
         elif 'email_otvet_' in call.data:
             answer = 'Ответить'
             to = (call.data).replace('email_otvet_', '')
-            user = user_login(call.from_user.id)
+            user = user_login(call.message.chat.id)
             msg = emailCheck(user[0], user[1], user[2]).send_mail(to, 'Answer for message')
             bot.edit_message_text('Мы отправили ответ этому адресу:\n'+str(to), chat_id=call.message.chat.id, message_id=call.message.message_id)
         elif 'email_view' in call.data:
             bot.answer_callback_query(callback_query_id=call.id, text='Мы готовы показать Вам письмо, но сначала посчитайте до 5!')
             uid = (call.data).replace('email_view_', '')
-            user = user_login(call.from_user.id)
+            user = user_login(call.message.chat.id)
             msg = emailCheck(user[0], user[1], user[2]).get_body_email(uid)
             answer = f'Письмо просмотрено'
             bot.edit_message_text(call.message.text+'\n\nВот что Вам написали в письме:\n'+str(msg), chat_id=call.message.chat.id, message_id=call.message.message_id)
         elif 'email_delete' in call.data:
             answer = f'Письмо удалено'
             uid = (call.data).replace('email_delete_', '')
-            user = user_login(call.from_user.id)
+            user = user_login(call.message.chat.id)
             msg = emailCheck(user[0], user[1], user[2]).delted_email(uid)
             bot.edit_message_text("Письмо удалено", chat_id=call.message.chat.id, message_id=call.message.message_id)
 
